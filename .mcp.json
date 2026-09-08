@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "UnityMCP": {
+      "type": "stdio",
+      "command": "C:/Users/KGA_1/.local/bin/uvx.exe",
+      "args": ["--from", "mcpforunityserver==10.2.0", "mcp-for-unity"]
+    }
+  }
+}
