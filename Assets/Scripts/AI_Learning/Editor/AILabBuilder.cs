@@ -330,11 +330,11 @@ namespace AILearning.LabEditor
         {
             GameObject go = new GameObject("Main Camera");
             go.tag = "MainCamera";
-            go.transform.position = new Vector3(LabLayout.Anchor01, -4.73f, -10f);
+            go.transform.position = new Vector3(LabLayout.Anchor01, LabLayout.CameraY, -10f);
 
             Camera cam = go.AddComponent<Camera>();
             cam.orthographic = true;
-            cam.orthographicSize = 6f;
+            cam.orthographicSize = LabLayout.CameraSize;
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = new Color(0.043f, 0.055f, 0.078f, 1f);
             cam.nearClipPlane = 0.1f;
@@ -343,26 +343,24 @@ namespace AILearning.LabEditor
             go.AddComponent<AudioListener>();
 
             LabCameraRig rig = go.AddComponent<LabCameraRig>();
-            rig.cameraY = -4.73f;
+            rig.cameraY = LabLayout.CameraY;
             rig.minX = LabLayout.CameraMinX;
             rig.maxX = LabLayout.CameraMaxX;
         }
 
+        /// <summary>
+        /// 단계별 플랫폼과 그 사이를 막는 벽을 깐다.
+        ///
+        /// 타일맵을 두 개로 나눈다.
+        ///   GroundTilemap : 발판. "Ground" 태그가 붙는다. (PlayerController 의 점프 판정용)
+        ///   WallTilemap   : 플랫폼 양 끝의 벽. 태그를 붙이지 않는다.
+        ///                   벽에 닿았다고 점프가 되살아나면 벽을 타고 올라갈 수 있기 때문이다.
+        /// </summary>
         private static void CreateGround()
         {
             GameObject gridGo = new GameObject("Grid");
             Grid grid = gridGo.AddComponent<Grid>();
             grid.cellSize = new Vector3(1f, 1f, 0f);
-
-            GameObject tmGo = new GameObject("GroundTilemap");
-            tmGo.transform.SetParent(gridGo.transform, false);
-            tmGo.tag = "Ground";
-
-            Tilemap tilemap = tmGo.AddComponent<Tilemap>();
-            TilemapRenderer renderer = tmGo.AddComponent<TilemapRenderer>();
-            renderer.sortingOrder = -10;
-
-            tmGo.AddComponent<TilemapCollider2D>();
 
             TileBase tile = AssetDatabase.LoadAssetAtPath<TileBase>(GroundTilePath);
             if (tile == null)
@@ -371,12 +369,40 @@ namespace AILearning.LabEditor
                 return;
             }
 
-            // 지면은 두 줄만 깐다. 그 아래 빈 공간은 학습 패널이 놓이는 자리다.
-            for (int x = LabLayout.GroundMinX; x <= LabLayout.GroundMaxX; x++)
+            Tilemap ground = CreateTilemapLayer(gridGo, "GroundTilemap", -10, "Ground");
+            Tilemap walls = CreateTilemapLayer(gridGo, "WallTilemap", -9, null);
+
+            foreach (LabLayout.Platform p in LabLayout.Platforms)
             {
-                tilemap.SetTile(new Vector3Int(x, -4, 0), tile);
-                tilemap.SetTile(new Vector3Int(x, -5, 0), tile);
+                // 발판은 두 줄만 깐다. 그 아래 빈 공간은 학습 패널이 놓이는 자리다.
+                // 벽이 서는 자리(양 끝 바깥 한 칸)에도 발판을 깔아 벽의 밑동을 만든다.
+                for (int x = p.MinX - 1; x <= p.MaxX + 1; x++)
+                {
+                    ground.SetTile(new Vector3Int(x, -4, 0), tile);
+                    ground.SetTile(new Vector3Int(x, -5, 0), tile);
+                }
+
+                // 양 끝 바깥에 벽을 세운다. 플랫폼 사이의 빈 공간으로 떨어질 수 없다.
+                for (int y = -3; y < -3 + LabLayout.WallHeight; y++)
+                {
+                    walls.SetTile(new Vector3Int(p.MinX - 1, y, 0), tile);
+                    walls.SetTile(new Vector3Int(p.MaxX + 1, y, 0), tile);
+                }
             }
+        }
+
+        private static Tilemap CreateTilemapLayer(GameObject gridGo, string name, int sortingOrder, string tag)
+        {
+            GameObject go = new GameObject(name);
+            go.transform.SetParent(gridGo.transform, false);
+            if (!string.IsNullOrEmpty(tag))
+                go.tag = tag;
+
+            Tilemap tilemap = go.AddComponent<Tilemap>();
+            TilemapRenderer renderer = go.AddComponent<TilemapRenderer>();
+            renderer.sortingOrder = sortingOrder;
+            go.AddComponent<TilemapCollider2D>();
+            return tilemap;
         }
 
         private static void CreateSystems()
@@ -426,6 +452,8 @@ namespace AILearning.LabEditor
             // 이 AI 는 순찰하지 않는다. 제자리에서 거리만 본다.
             PatrolRoute route = enemy.GetComponent<PatrolRoute>();
             if (route != null) route.points = new Transform[0];
+
+            SetLane(enemy, LabLayout.SimpleLaneL, LabLayout.SimpleLaneR);
         }
 
         private static void CreateZone02()
@@ -437,7 +465,8 @@ namespace AILearning.LabEditor
                 new Vector3(LabLayout.StateX, LabLayout.EnemyY, 0f));
             if (enemy == null) return;
 
-            SetPatrol(enemy, "W_State", LabLayout.StatePatrolLeft, LabLayout.StatePatrolRight);
+            SetPatrol(enemy, "W_State", LabLayout.StatePatrolLeft, LabLayout.StatePatrolRight,
+                LabLayout.StateLaneL, LabLayout.StateLaneR);
         }
 
         private static void CreateZone04()
@@ -472,6 +501,8 @@ namespace AILearning.LabEditor
                     ctx.loseSightRange = 0.01f;
                     ctx.attackRange = 0.01f;
                 }
+
+                SetLane(seq, LabLayout.SeqLaneL, LabLayout.SeqLaneR);
             }
 
             CreateSign("Sign_04b", LabLayout.SelEnemyX + 0.5f, "STEP 04 - 2",
@@ -490,13 +521,14 @@ namespace AILearning.LabEditor
                     selCtx.loseSightRange = 5f;
                 }
 
-                SetPatrol(sel, "W_Selector", LabLayout.SelPatrolLeft, LabLayout.SelPatrolRight);
+                SetPatrol(sel, "W_Selector", LabLayout.SelPatrolLeft, LabLayout.SelPatrolRight,
+                    LabLayout.SelLaneL, LabLayout.SelLaneR);
             }
         }
 
         private static void CreateZone05()
         {
-            CreateSign("Sign_05", 26.5f, "STEP 05  ·  06",
+            CreateSign("Sign_05", LabLayout.CompareCenterX, "STEP 05  ·  06",
                 "같은 요구사항, 두 가지 구조", new Color(0.98f, 0.55f, 0.55f));
 
             GameObject a = Instantiate(EnemyStatePrefab, LabNames.CompareState,
@@ -505,7 +537,8 @@ namespace AILearning.LabEditor
             {
                 AIContext ctx = a.GetComponent<AIContext>();
                 if (ctx != null) ctx.displayName = "A  ·  State Pattern";
-                SetPatrol(a, "W_CmpA", LabLayout.CompareStateLeft, LabLayout.CompareStateRight);
+                SetPatrol(a, "W_CmpA", LabLayout.CompareStateLeft, LabLayout.CompareStateRight,
+                    LabLayout.CompareStateLaneL, LabLayout.CompareStateLaneR);
             }
 
             GameObject b = Instantiate(EnemyBtFullPrefab, LabNames.CompareBt,
@@ -514,7 +547,8 @@ namespace AILearning.LabEditor
             {
                 AIContext ctx = b.GetComponent<AIContext>();
                 if (ctx != null) ctx.displayName = "B  ·  Behavior Graph";
-                SetPatrol(b, "W_CmpB", LabLayout.CompareBtLeft, LabLayout.CompareBtRight);
+                SetPatrol(b, "W_CmpB", LabLayout.CompareBtLeft, LabLayout.CompareBtRight,
+                    LabLayout.CompareBtLaneL, LabLayout.CompareBtLaneR);
             }
         }
 
@@ -547,7 +581,9 @@ namespace AILearning.LabEditor
                 ctx.reactToSharedAlarm = true;
             }
 
-            SetPatrol(go, "W_" + objectName, x - LabLayout.SquadPatrolSpan, x + LabLayout.SquadPatrolSpan);
+            SetPatrol(go, "W_" + objectName,
+                x - LabLayout.SquadPatrolSpan, x + LabLayout.SquadPatrolSpan,
+                x - LabLayout.SquadLaneSpan, x + LabLayout.SquadLaneSpan);
         }
 
         // 도우미 ------------------------------------------------------
@@ -567,7 +603,9 @@ namespace AILearning.LabEditor
             return instance;
         }
 
-        private static void SetPatrol(GameObject enemy, string prefix, float leftX, float rightX)
+        /// <summary>순찰 지점 두 개를 만들고, 이동 범위를 자기 레인 안으로 묶는다.</summary>
+        private static void SetPatrol(GameObject enemy, string prefix, float leftX, float rightX,
+            float laneMinX, float laneMaxX)
         {
             GameObject left = CreateWaypoint(prefix + "_L", leftX, new Color(0.42f, 0.82f, 0.55f, 0.7f));
             GameObject right = CreateWaypoint(prefix + "_R", rightX, new Color(0.42f, 0.82f, 0.55f, 0.7f));
@@ -576,14 +614,23 @@ namespace AILearning.LabEditor
             if (route != null)
                 route.points = new[] { left.transform, right.transform };
 
+            SetLane(enemy, laneMinX, laneMaxX);
+        }
+
+        /// <summary>
+        /// Enemy 의 이동 한계를 정한다.
+        ///
+        /// 레인은 Enemy 마다 겹치지 않게 LabLayout 에서 미리 갈라 두었다.
+        /// 예전에는 "순찰 구간 ± 4.5" 로 자동 계산했는데, 그러면 옆 Enemy 의
+        /// 자리까지 넘어가서 서로 밀고 겹쳐 버렸다. (STEP 05 / 06 에서 특히 심했다)
+        /// </summary>
+        private static void SetLane(GameObject enemy, float laneMinX, float laneMaxX)
+        {
             AIMotor motor = enemy.GetComponent<AIMotor>();
-            if (motor != null)
-            {
-                // 순찰 구간보다 조금 넓게 이동 한계를 둔다. (추적 / 도망 여유)
-                // 너무 넓게 두면 다른 학습 구역까지 따라와서 관찰을 방해한다.
-                motor.minX = leftX - 4.5f;
-                motor.maxX = rightX + 4.5f;
-            }
+            if (motor == null) return;
+
+            motor.minX = laneMinX;
+            motor.maxX = laneMaxX;
         }
 
         private static GameObject CreateWaypoint(string name, float x, Color color)

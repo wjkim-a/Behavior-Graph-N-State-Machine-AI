@@ -188,7 +188,9 @@ namespace AILearning
             if (kb.rKey.wasPressedThisFrame) ResetExperiment();
             if (kb.zKey.wasPressedThisFrame) ToggleAlarm();
 
-            if (kb.dKey.wasPressedThisFrame) TogglePanel(LabPanel.Diagram);
+            // 구조 다이어그램은 E 키다. D 는 Player 이동(A / D)에 이미 쓰이고 있어서
+            // 오른쪽으로 걸어가려는 순간마다 화면이 바뀌어 버렸다.
+            if (kb.eKey.wasPressedThisFrame) TogglePanel(LabPanel.Diagram);
             if (kb.cKey.wasPressedThisFrame) TogglePanel(LabPanel.Compare);
             if (kb.bKey.wasPressedThisFrame) TogglePanel(LabPanel.Blackboard);
             if (kb.mKey.wasPressedThisFrame) TogglePanel(LabPanel.Mission);
@@ -522,7 +524,7 @@ namespace AILearning
                 AutoPanels = LabPanel.Mission | LabPanel.Diagram,
                 DiagramKind = AISystemKind.StatePattern
             };
-            s3.Missions.Add(new LabMission("D 키로 State Machine 구조를 확인한다.", d => d.Has("OPEN_DIAGRAM")));
+            s3.Missions.Add(new LabMission("E 키로 State Machine 구조를 확인한다.", d => d.Has("OPEN_DIAGRAM")));
             s3.Missions.Add(new LabMission("ENTER → EXECUTE → EXIT 로그를 확인한다.", d => d.TransitionSeen(LabNames.State, "PATROL", "CHASE")));
             s3.Missions.Add(new LabMission("ATTACK 에서 CHASE 로 돌아가게 만든다.", d => d.TransitionSeen(LabNames.State, "ATTACK", "CHASE")));
             s3.Missions.Add(new LabMission("CHASE 에서 PATROL 로 돌아가게 만든다.", d => d.TransitionSeen(LabNames.State, "CHASE", "PATROL")));
@@ -607,7 +609,7 @@ namespace AILearning
                     "다른 것은 오직 <b>판단 구조</b>뿐이다.",
                     "",
                     "가운데에 서면 두 Enemy 가 동시에 반응한다.",
-                    "D 키로 번갈아 보고, C 키로 나란히 비교하자."
+                    "E 키로 번갈아 보고, C 키로 나란히 비교하자."
                 },
                 Questions = new[]
                 {

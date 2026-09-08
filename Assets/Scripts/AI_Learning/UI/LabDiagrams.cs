@@ -14,8 +14,15 @@ namespace AILearning
         public Text Sub;
         public Text Badge;
 
+        /// <summary>
+        /// 상자 하나를 만든다.
+        ///
+        /// 높이 h 는 위 60% 를 제목, 아래 40% 를 부제에 쓴다.
+        /// 그래서 부제가 있는 상자는 h 가 66 보다 작으면 글자가 상자를 넘친다.
+        /// (제목 24 -> 37px, 부제 16 -> 25px 필요)
+        /// </summary>
         public static DiagramBox Create(Transform parent, string name, float x, float y, float w, float h,
-            string title, string sub, int titleSize = 18, int subSize = 13)
+            string title, string sub, int titleSize = LabUIKit.FsHead, int subSize = LabUIKit.FsSmall)
         {
             DiagramBox box = new DiagramBox();
             box.Rt = LabUIKit.NewRect(parent, name);
@@ -56,8 +63,8 @@ namespace AILearning
         public void AddBadge(string text, Color color)
         {
             RectTransform rt = LabUIKit.Panel(Rt, "Badge", color);
-            LabUIKit.TopLeft(rt, -8f, 10f, 30f, 26f);
-            Badge = LabUIKit.Label(rt, "T", text, 16, new Color(0.06f, 0.08f, 0.12f),
+            LabUIKit.TopLeft(rt, -9f, 11f, 32f, 28f);
+            Badge = LabUIKit.Label(rt, "T", text, LabUIKit.FsSmall, new Color(0.06f, 0.08f, 0.12f),
                 TextAnchor.MiddleCenter, FontStyle.Bold);
             LabUIKit.Stretch(Badge.rectTransform, 0f, 0f, 0f, 0f);
         }
@@ -110,56 +117,58 @@ namespace AILearning
             Root = LabUIKit.NewRect(parent, "StateDiagram");
             LabUIKit.Stretch(Root, 0f, 0f, 0f, 0f);
 
-            Text headline = LabUIKit.Label(Root, "Headline", "STATE PATTERN  -  구조", 24,
+            Text headline = LabUIKit.Label(Root, "Headline", "STATE PATTERN  -  구조", LabUIKit.FsTitle,
                 LabUIKit.Accent, TextAnchor.UpperLeft, FontStyle.Bold);
-            LabUIKit.TopLeft(headline.rectTransform, 0f, 0f, width, 30f);
+            LabUIKit.TopLeft(headline.rectTransform, 0f, 0f, width, 38f);
 
-            _owner = LabUIKit.Label(Root, "Owner", "", 16, LabUIKit.TextDim, TextAnchor.UpperRight);
-            LabUIKit.TopLeft(_owner.rectTransform, 0f, 4f, width, 24f);
+            // 제목과 같은 줄. 제목은 왼쪽, 이것은 오른쪽 정렬이라 부딪히지 않는다.
+            // (한 줄 위에 두면 페이지 상단의 안내 문구와 겹친다.)
+            _owner = LabUIKit.Label(Root, "Owner", "", LabUIKit.FsBody, LabUIKit.TextDim, TextAnchor.UpperRight);
+            LabUIKit.TopLeft(_owner.rectTransform, 0f, 0f, width, 38f);
 
             float cx = width * 0.5f;
 
-            DiagramBox machine = DiagramBox.Create(Root, "Machine", cx - 190f, -40f, 380f, 50f,
-                "StateMachine", "지금 어떤 State 를 쓸지 관리한다", 20, 14);
+            DiagramBox machine = DiagramBox.Create(Root, "Machine", cx - 200f, -44f, 400f, 66f,
+                "StateMachine", "지금 어떤 State 를 쓸지 관리한다");
             machine.SetHighlight(true, LabUIKit.Accent);
 
-            LabUIKit.VLine(Root, cx - 1f, -90f, 24f, LabUIKit.PanelEdge, 3f);
+            LabUIKit.VLine(Root, cx - 1f, -110f, 18f, LabUIKit.PanelEdge, 3f);
 
-            _currentBox = DiagramBox.Create(Root, "Current", cx - 250f, -114f, 500f, 54f,
-                "Current State : -", "이 값을 교체하는 것이 곧 행동을 바꾸는 것이다", 21, 14);
+            _currentBox = DiagramBox.Create(Root, "Current", cx - 270f, -128f, 540f, 68f,
+                "Current State : -", "이 값을 교체하는 것이 곧 행동을 바꾸는 것이다", LabUIKit.FsTitle);
 
-            LabUIKit.VLine(Root, cx - 1f, -168f, 22f, LabUIKit.PanelEdge, 3f);
+            LabUIKit.VLine(Root, cx - 1f, -196f, 18f, LabUIKit.PanelEdge, 3f);
 
             // 5개 상태 상자
             string[] names = EnemyStateMachine.StateNames;
             int n = names.Length;
             float gap = 18f;
-            float boxW = Mathf.Min(210f, (width - (n - 1) * gap) / n);
+            float boxW = Mathf.Min(225f, (width - (n - 1) * gap) / n);
             float total = n * boxW + (n - 1) * gap;
             float startX = (width - total) * 0.5f;
-            float boxY = -214f;
-            float boxH = 72f;
+            float boxY = -240f;
+            float boxH = 68f;
 
             float firstCenter = startX + boxW * 0.5f;
             float lastCenter = startX + total - boxW * 0.5f;
-            LabUIKit.HLine(Root, firstCenter, -190f, lastCenter - firstCenter, LabUIKit.PanelEdge, 3f);
+            LabUIKit.HLine(Root, firstCenter, -214f, lastCenter - firstCenter, LabUIKit.PanelEdge, 3f);
 
             for (int i = 0; i < n; i++)
             {
                 float x = startX + i * (boxW + gap);
                 float center = x + boxW * 0.5f;
-                LabUIKit.VLine(Root, center - 1f, -190f, 26f, LabUIKit.PanelEdge, 3f);
+                LabUIKit.VLine(Root, center - 1f, -214f, 26f, LabUIKit.PanelEdge, 3f);
 
                 DiagramBox box = DiagramBox.Create(Root, "State_" + names[i], x, boxY, boxW, boxH,
-                    names[i], "대기", 22, 14);
+                    names[i], "대기", LabUIKit.FsTitle);
                 _stateBoxes[names[i]] = box;
             }
 
-            // 전환 규칙 목록
+            // 전환 규칙 목록. 7줄이 페이지 아래 끝(578px) 안에 들어간다.
             Text rulesTitle = LabUIKit.Label(Root, "RulesTitle",
-                "STATE TRANSITION  -  상태는 조건이 있을 때만 바뀐다", 19,
+                "STATE TRANSITION  -  상태는 조건이 있을 때만 바뀐다", LabUIKit.FsHead,
                 LabUIKit.AccentWarm, TextAnchor.UpperLeft, FontStyle.Bold);
-            LabUIKit.TopLeft(rulesTitle.rectTransform, 6f, -304f, width, 26f);
+            LabUIKit.TopLeft(rulesTitle.rectTransform, 6f, -320f, width, 34f);
 
             int rules = LabDiagramSpecs.TransitionRules.GetLength(0);
             for (int i = 0; i < rules; i++)
@@ -171,8 +180,8 @@ namespace AILearning
 
                 Text t = LabUIKit.Label(Root, "Rule" + i,
                     "    " + fromLabel.PadRight(10) + "  →  " + to.PadRight(8) + "      " + cond,
-                    17, LabUIKit.TextDim);
-                LabUIKit.TopLeft(t.rectTransform, 6f, -338f - i * 27f, width - 12f, 26f);
+                    LabUIKit.FsBody, LabUIKit.TextDim);
+                LabUIKit.TopLeft(t.rectTransform, 6f, -358f - i * 29f, width - 12f, 28f);
                 _ruleTexts.Add(t);
             }
         }
@@ -226,36 +235,38 @@ namespace AILearning
             Root = LabUIKit.NewRect(parent, "TreeDiagram");
             LabUIKit.Stretch(Root, 0f, 0f, 0f, 0f);
 
-            Text head = LabUIKit.Label(Root, "Headline", headline, 24, LabUIKit.Accent,
+            Text head = LabUIKit.Label(Root, "Headline", headline, LabUIKit.FsTitle, LabUIKit.Accent,
                 TextAnchor.UpperLeft, FontStyle.Bold);
-            LabUIKit.TopLeft(head.rectTransform, 0f, 0f, width, 30f);
+            LabUIKit.TopLeft(head.rectTransform, 0f, 0f, width, 38f);
 
-            _owner = LabUIKit.Label(Root, "Owner", "", 16, LabUIKit.TextDim, TextAnchor.UpperRight);
-            LabUIKit.TopLeft(_owner.rectTransform, 0f, 4f, width, 24f);
+            // 제목과 같은 줄. 제목은 왼쪽, 이것은 오른쪽 정렬이라 부딪히지 않는다.
+            // (한 줄 위에 두면 페이지 상단의 안내 문구와 겹친다.)
+            _owner = LabUIKit.Label(Root, "Owner", "", LabUIKit.FsBody, LabUIKit.TextDim, TextAnchor.UpperRight);
+            LabUIKit.TopLeft(_owner.rectTransform, 0f, 0f, width, 38f);
 
             float cx = width * 0.5f;
 
-            DiagramBox root = DiagramBox.Create(Root, "Root", cx - 170f, -40f, 340f, 48f,
-                spec.RootTitle, null, 21);
+            DiagramBox root = DiagramBox.Create(Root, "Root", cx - 185f, -44f, 370f, 54f,
+                spec.RootTitle, null, LabUIKit.FsTitle);
             root.SetHighlight(true, LabUIKit.Accent);
 
-            LabUIKit.VLine(Root, cx - 1f, -88f, 24f, LabUIKit.PanelEdge, 3f);
+            LabUIKit.VLine(Root, cx - 1f, -98f, 18f, LabUIKit.PanelEdge, 3f);
 
-            DiagramBox composite = DiagramBox.Create(Root, "Composite", cx - 280f, -112f, 560f, 58f,
-                spec.CompositeTitle, spec.CompositeNote, 22, 14);
+            DiagramBox composite = DiagramBox.Create(Root, "Composite", cx - 300f, -116f, 600f, 66f,
+                spec.CompositeTitle, spec.CompositeNote, LabUIKit.FsTitle);
             composite.SetHighlight(true, LabUIKit.AccentWarm);
 
-            LabUIKit.VLine(Root, cx - 1f, -170f, 22f, LabUIKit.PanelEdge, 3f);
+            LabUIKit.VLine(Root, cx - 1f, -182f, 16f, LabUIKit.PanelEdge, 3f);
 
             int n = spec.Branches.Count;
             float gap = 18f;
-            float colW = Mathf.Min(250f, (width - (n - 1) * gap) / n);
+            float colW = Mathf.Min(255f, (width - (n - 1) * gap) / n);
             float total = n * colW + (n - 1) * gap;
             float startX = (width - total) * 0.5f;
 
             float firstCenter = startX + colW * 0.5f;
             float lastCenter = startX + total - colW * 0.5f;
-            LabUIKit.HLine(Root, firstCenter, -192f, lastCenter - firstCenter, LabUIKit.PanelEdge, 3f);
+            LabUIKit.HLine(Root, firstCenter, -198f, lastCenter - firstCenter, LabUIKit.PanelEdge, 3f);
 
             for (int i = 0; i < n; i++)
             {
@@ -263,39 +274,41 @@ namespace AILearning
                 float x = startX + i * (colW + gap);
                 float center = x + colW * 0.5f;
 
-                LabUIKit.VLine(Root, center - 1f, -192f, 26f, LabUIKit.PanelEdge, 3f);
+                LabUIKit.VLine(Root, center - 1f, -198f, 24f, LabUIKit.PanelEdge, 3f);
 
                 string condTitle = string.IsNullOrEmpty(b.ConditionName) ? "(조건 없음)" : b.ConditionName;
                 string condSub = spec.ConditionsAreEvaluated
                     ? (string.IsNullOrEmpty(b.ConditionName) ? "기본 행동" : "FALSE")
                     : "Sequence 단계";
 
-                DiagramBox cond = DiagramBox.Create(Root, "Cond" + i, x, -218f, colW, 70f,
-                    condTitle, condSub, 17, 15);
+                DiagramBox cond = DiagramBox.Create(Root, "Cond" + i, x, -222f, colW, 68f,
+                    condTitle, condSub, LabUIKit.FsBody);
                 if (spec.ShowPriority)
                     cond.AddBadge((i + 1).ToString(), LabUIKit.AccentWarm);
                 _conditionBoxes.Add(cond);
 
-                LabUIKit.VLine(Root, center - 1f, -288f, 22f, LabUIKit.PanelEdge, 3f);
+                LabUIKit.VLine(Root, center - 1f, -290f, 16f, LabUIKit.PanelEdge, 3f);
 
-                DiagramBox act = DiagramBox.Create(Root, "Act" + i, x, -310f, colW, 70f,
-                    b.ActionTitle, "Action", 19, 14);
+                DiagramBox act = DiagramBox.Create(Root, "Act" + i, x, -306f, colW, 68f,
+                    b.ActionTitle, "Action", LabUIKit.FsHead);
                 _actionBoxes.Add(act);
             }
 
             // 아래쪽 설명 : 두 열로 나눠서 넉넉하게 보여준다.
+            // 두 열로 쪼개면 한 열이 630px 밖에 안 되므로 각주 크기를 쓴다.
+            // 가장 긴 것이 SelectorDemo(왼쪽 3줄 + 오른쪽 6줄)다. 6줄이 578px 안에 들어간다.
             float colWidth = spec.Footer2.Length > 0 ? (width - 40f) * 0.5f : width - 12f;
 
             for (int i = 0; i < spec.Footer.Length; i++)
             {
-                Text t = LabUIKit.Label(Root, "Foot" + i, "·  " + spec.Footer[i], 16, LabUIKit.TextDim);
-                LabUIKit.TopLeft(t.rectTransform, 6f, -398f - i * 26f, colWidth, 24f);
+                Text t = LabUIKit.Label(Root, "Foot" + i, "·  " + spec.Footer[i], LabUIKit.FsSmall, LabUIKit.TextDim);
+                LabUIKit.TopLeft(t.rectTransform, 6f, -388f - i * 26f, colWidth, 26f);
             }
 
             for (int i = 0; i < spec.Footer2.Length; i++)
             {
-                Text t = LabUIKit.Label(Root, "Foot2_" + i, spec.Footer2[i], 16, LabUIKit.TextDim);
-                LabUIKit.TopLeft(t.rectTransform, colWidth + 40f, -398f - i * 26f, colWidth, 24f);
+                Text t = LabUIKit.Label(Root, "Foot2_" + i, spec.Footer2[i], LabUIKit.FsSmall, LabUIKit.TextDim);
+                LabUIKit.TopLeft(t.rectTransform, colWidth + 40f, -388f - i * 26f, colWidth, 26f);
             }
         }
 
@@ -356,22 +369,22 @@ namespace AILearning
             LabUIKit.Stretch(Root, 0f, 0f, 0f, 0f);
 
             Text head = LabUIKit.Label(Root, "Headline",
-                "구조 없는 AI  -  거리 조건을 위에서부터 확인한다", 24,
+                "구조 없는 AI  -  거리 조건을 위에서부터 확인한다", LabUIKit.FsTitle,
                 LabUIKit.Accent, TextAnchor.UpperLeft, FontStyle.Bold);
-            LabUIKit.TopLeft(head.rectTransform, 0f, 0f, width, 30f);
+            LabUIKit.TopLeft(head.rectTransform, 0f, 0f, width, 38f);
 
-            _distance = LabUIKit.Label(Root, "Distance", "", 17, LabUIKit.TextDim, TextAnchor.UpperRight);
-            LabUIKit.TopLeft(_distance.rectTransform, 0f, 4f, width, 24f);
+            _distance = LabUIKit.Label(Root, "Distance", "", LabUIKit.FsBody, LabUIKit.TextDim, TextAnchor.UpperRight);
+            LabUIKit.TopLeft(_distance.rectTransform, 0f, 0f, width, 38f);
 
-            float rowW = Mathf.Min(900f, width - 120f);
+            float rowW = Mathf.Min(960f, width - 120f);
             float rowX = (width - rowW) * 0.5f;
 
             for (int i = 0; i < _specs.Length; i++)
             {
-                DiagramBox row = DiagramBox.Create(Root, "Row" + i, rowX, -54f - i * 80f, rowW, 68f,
+                DiagramBox row = DiagramBox.Create(Root, "Row" + i, rowX, -56f - i * 86f, rowW, 74f,
                     _specs[i].ConditionName + "        →        " + _specs[i].ActionLabel +
                     "   (" + _specs[i].ActionTitle + ")",
-                    null, 21);
+                    null, LabUIKit.FsHead);
                 row.AddBadge((i + 1).ToString(), LabUIKit.AccentWarm);
                 _rows.Add(row);
             }
@@ -386,8 +399,8 @@ namespace AILearning
 
             for (int i = 0; i < footer.Length; i++)
             {
-                Text t = LabUIKit.Label(Root, "Foot" + i, "·  " + footer[i], 17, LabUIKit.TextDim);
-                LabUIKit.TopLeft(t.rectTransform, 10f, -390f - i * 28f, width - 20f, 26f);
+                Text t = LabUIKit.Label(Root, "Foot" + i, "·  " + footer[i], LabUIKit.FsBody, LabUIKit.TextDim);
+                LabUIKit.TopLeft(t.rectTransform, 10f, -402f - i * 28f, width - 20f, 28f);
             }
         }
 

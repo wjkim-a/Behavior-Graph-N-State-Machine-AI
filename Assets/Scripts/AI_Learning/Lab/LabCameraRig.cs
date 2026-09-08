@@ -14,7 +14,7 @@ namespace AILearning
         public Transform target;
 
         [Tooltip("카메라 Y 위치. 지면(-3)보다 아래로 두어 플레이 장면을 화면 위쪽에 올린다.")]
-        public float cameraY = -4.73f;
+        public float cameraY = LabLayout.CameraY;
 
         [Tooltip("따라가는 부드러움. 0 이면 즉시 따라간다.")]
         public float smooth = 0.12f;
@@ -32,7 +32,7 @@ namespace AILearning
             if (_cam != null)
             {
                 _cam.orthographic = true;
-                _cam.orthographicSize = 6f;
+                _cam.orthographicSize = LabLayout.CameraSize;
             }
         }
 

@@ -20,7 +20,9 @@ namespace AILearning
         private readonly Image _hpFill;
         private readonly Text _system;
 
-        private const float Width = 240f;
+        // Game View 세로 공간이 한정되어 있다. (지면 - Enemy - 이 라벨 - 구역 표지판)
+        // Height 를 키우면 표지판이 상단바에 가려지므로 96px 을 유지하고 글자만 키웠다.
+        private const float Width = 260f;
         private const float Height = 96f;
 
         public EnemyWorldLabel(Transform parent, AIContext ctx)
@@ -48,16 +50,18 @@ namespace AILearning
             _bg.color = new Color(0.05f, 0.07f, 0.11f, 0.92f);
             _bg.raycastTarget = false;
 
-            _system = LabUIKit.Label(_root, "System", "", 13, LabUIKit.TextDim, TextAnchor.UpperCenter);
-            LabUIKit.TopLeft(_system.rectTransform, 6f, -6f, Width - 12f, 18f);
+            _system = LabUIKit.Label(_root, "System", "", LabUIKit.FsSmall, LabUIKit.TextDim, TextAnchor.UpperCenter);
+            LabUIKit.TopLeft(_system.rectTransform, 6f, -3f, Width - 12f, 22f);
 
-            _name = LabUIKit.Label(_root, "Name", ctx.displayName, 14, LabUIKit.TextMain, TextAnchor.UpperCenter);
-            LabUIKit.TopLeft(_name.rectTransform, 6f, -25f, Width - 12f, 18f);
+            _name = LabUIKit.Label(_root, "Name", ctx.displayName, LabUIKit.FsSmall, LabUIKit.TextMain,
+                TextAnchor.UpperCenter);
+            LabUIKit.TopLeft(_name.rectTransform, 6f, -25f, Width - 12f, 22f);
 
-            _label = LabUIKit.Label(_root, "Label", "-", 26, Color.white, TextAnchor.UpperCenter, FontStyle.Bold);
-            LabUIKit.TopLeft(_label.rectTransform, 6f, -45f, Width - 12f, 34f);
+            _label = LabUIKit.Label(_root, "Label", "-", LabUIKit.FsHuge, Color.white,
+                TextAnchor.UpperCenter, FontStyle.Bold);
+            LabUIKit.TopLeft(_label.rectTransform, 6f, -45f, Width - 12f, 42f);
 
-            _hpFill = LabUIKit.Bar(_root, "Hp", 12f, -83f, Width - 24f, 9f,
+            _hpFill = LabUIKit.Bar(_root, "Hp", 12f, -88f, Width - 24f, 8f,
                 new Color(0.18f, 0.20f, 0.26f, 1f), LabUIKit.Good);
         }
 
@@ -108,7 +112,7 @@ namespace AILearning
             _sign = sign;
 
             _root = LabUIKit.NewRect(parent, "Sign_" + sign.gameObject.name);
-            _root.sizeDelta = new Vector2(380f, 58f);
+            _root.sizeDelta = new Vector2(420f, 58f);
             _root.pivot = new Vector2(0.5f, 0f);
             _root.anchorMin = Vector2.zero;
             _root.anchorMax = Vector2.zero;
@@ -116,12 +120,13 @@ namespace AILearning
             RectTransform bar = LabUIKit.Panel(_root, "Bar", new Color(0.05f, 0.07f, 0.11f, 0.75f));
             LabUIKit.Stretch(bar, 0f, 0f, 0f, 0f);
 
-            Text title = LabUIKit.Label(_root, "Title", sign.title, 19, sign.color,
+            Text title = LabUIKit.Label(_root, "Title", sign.title, LabUIKit.FsHead, sign.color,
                 TextAnchor.UpperCenter, FontStyle.Bold);
-            LabUIKit.TopLeft(title.rectTransform, 6f, -7f, 368f, 24f);
+            LabUIKit.TopLeft(title.rectTransform, 6f, -4f, 408f, 30f);
 
-            Text sub = LabUIKit.Label(_root, "Sub", sign.subtitle, 15, LabUIKit.TextDim, TextAnchor.UpperCenter);
-            LabUIKit.TopLeft(sub.rectTransform, 6f, -32f, 368f, 20f);
+            Text sub = LabUIKit.Label(_root, "Sub", sign.subtitle, LabUIKit.FsSmall, LabUIKit.TextDim,
+                TextAnchor.UpperCenter);
+            LabUIKit.TopLeft(sub.rectTransform, 6f, -33f, 408f, 24f);
         }
 
         public void Refresh(Camera cam, bool show)
@@ -133,7 +138,7 @@ namespace AILearning
             }
 
             Vector3 sp = cam.WorldToScreenPoint(_sign.transform.position);
-            bool onScreen = sp.z > 0f && sp.x > -380f && sp.x < Screen.width + 380f;
+            bool onScreen = sp.z > 0f && sp.x > -420f && sp.x < Screen.width + 420f;
 
             _root.gameObject.SetActive(show && onScreen);
             if (show && onScreen)
